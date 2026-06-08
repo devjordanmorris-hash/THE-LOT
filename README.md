@@ -1,0 +1,41 @@
+# THE-LOT – Open Source Bitwise Mathematics, Compression & Signal Processing
+
+**Copyright (c) 2026 Jordan Morris**  
+**License:** MIT (see [LICENSE](LICENSE) file)
+
+JORDAN MORRIS - ALL CODE MIT. For a world worth living in once more - and mildly less shit.
+
+## Overview
+
+This repository (`THE-LOT`) is the public archive of original bitwise algorithms and high‑performance computing experiments developed by Jordan Morris. All code is published under the **MIT license**, meaning it is free to use, modify, and distribute for any purpose – commercial, military, humanitarian, or educational – with no permission required and no royalties.
+
+The only condition is that the original copyright notice (above) must be retained in any substantial copy or derivative work.
+
+## What’s Inside
+
+This collection focuses on **low‑level, integer‑only, often bitwise** implementations that compete with or outperform standard floating‑point and hardware‑specific functions. Key areas include:
+
+- **Bitwise arithmetic** – fast integer division (Newton‑Raphson), carry/borrow preconditioners (Base4)
+- **Signal processing** – triangle‑based sine (no FPU, no LUT), prism/cubic Hermite sine, chirp fingerprinting
+- **Compression** – JLO geometric compression (prisms, diamonds), rate‑distortion sweeps
+- **GPU acceleration** – Metal kernels for division, fingerprinting, Fourier‑like transforms
+- **Thermal fingerprinting** – 64‑bit image fingerprints (band, contrast, direction)
+- **Entropy extraction** – white‑noise true random number generation
+
+All code is written in C, Metal, Objective‑C, or Swift and is ready to be compiled.
+
+## Why MIT?
+
+- **Freedom** – No patents, no royalties, no hidden restrictions.
+- **Trust** – The code is transparent and can be audited by anyone.
+- **Sovereignty** – Any country, company, or individual can use these algorithms to build their own secure, independent systems.
+- **Humanitarian** – While not part of the license, the author encourages using this work for non‑profit, disaster‑relief, medical research, and civilian protection.
+
+## Getting Started
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/devjordanmorris-hash/THE-LOT.git
+    cd THE-LOT
+
+   Contact:  jordan.morris@proton.me
