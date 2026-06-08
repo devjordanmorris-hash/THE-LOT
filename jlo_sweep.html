@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>J-L0 Rate–Distortion Sweep</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<style>body{font:14px/1.4 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;} .wrap{max-width:1000px;margin:20px auto;padding:0 12px;} h1{font-size:20px;margin:12px 0;} canvas{max-width:100%;height:360px;} .grid{display:grid;grid-template-columns:1fr;gap:24px} @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}} .card{border:1px solid #eee;border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04);} code{background:#f7f7f7;padding:2px 6px;border-radius:6px}</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="wrap">
+<h1>J-L0 Rate–Distortion Sweep</h1>
+<p>Epsilons: <code>1e-06, 3.0000001e-06, 9.9999997e-06, 2.9999999e-05, 9.9999997e-05, 0.00030000001, 0.001</code></p>
+<div class="grid">
+<div class="card"><h3>JLO size (KB) vs ε</h3><canvas id="sizeChart"></canvas></div>
+<div class="card"><h3>Segments & Avg Span vs ε</h3><canvas id="segChart"></canvas></div>
+<div class="card"><h3>RMS error vs ε</h3><canvas id="rmsChart"></canvas></div>
+<div class="card"><h3>MaxAbs error vs ε</h3><canvas id="maxChart"></canvas></div>
+</div>
+</div>
+<script>
+const labels = ["1e-06","3.0000001e-06","9.9999997e-06","2.9999999e-05","9.9999997e-05","0.00030000001","0.001"];
+const sizeKB = [380.359375,230.078125,140.3125,82.375,42.828125,22.953125,11.484375];
+const segments = [24342,14724,8979,5271,2740,1468,734];
+const avgSpan = [8.216251746,13.58326542,22.27419534,37.94346424,72.99270073,136.239782,272.479564];
+const rms = [4.626443839e-07,1.42978109e-06,4.124107396e-06,1.092698683e-05,3.829150679e-05,0.0001223055263,0.0004746161479];
+const maxAbs = [9.983778e-07,2.9951334e-06,9.99122858e-06,2.998113632e-05,9.995698929e-05,0.0002983510494,0.000959277153];
+function mkChart(id, label, data, extraDataset=null, ylog=false){
+  const ctx=document.getElementById(id);
+  new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:label,data:data,tension:0.2},...(extraDataset?[extraDataset]:[])]},options:{responsive:true,scales:{y:{type:ylog?'logarithmic':'linear'},x:{ticks:{maxRotation:0,autoSkip:true}}},plugins:{legend:{display:true}}});
+}
+mkChart('sizeChart','JLO size (KB)', sizeKB);
+mkChart('segChart','segments', segments, {label:'avgSpan', data: avgSpan, tension:0.2});
+mkChart('rmsChart','RMS error', rms, null, true);
+mkChart('maxChart','MaxAbs error', maxAbs, null, true);
+</script>
+</body>
+</html>

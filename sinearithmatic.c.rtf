@@ -1,0 +1,140 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red89\green138\blue67;\red24\green24\blue24;\red193\green193\blue193;
+\red183\green111\blue179;\red70\green137\blue204;\red194\green126\blue101;\red167\green197\blue152;\red202\green202\blue202;
+\red140\green211\blue254;\red212\green214\blue154;\red205\green173\blue106;}
+{\*\expandedcolortbl;;\cssrgb\c41569\c60000\c33333;\cssrgb\c12157\c12157\c12157;\cssrgb\c80000\c80000\c80000;
+\cssrgb\c77255\c52549\c75294;\cssrgb\c33725\c61176\c83922;\cssrgb\c80784\c56863\c47059;\cssrgb\c70980\c80784\c65882;\cssrgb\c83137\c83137\c83137;
+\cssrgb\c61176\c86275\c99608;\cssrgb\c86275\c86275\c66667;\cssrgb\c84314\c72941\c49020;}
+{\info
+{\author Jordan morris}}\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 // Author: Jordan Morris\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <stdio.h>\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <math.h>\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <stdlib.h>\cf4 \cb1 \strokec4 \
+\
+\cf5 \cb3 \strokec5 #define\cf6 \strokec6  N \cf8 \strokec8 10000\cf2 \strokec2                    // Number of steps in the lookup table\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #define\cf6 \strokec6  PI2 (M_PI \cf9 \strokec9 /\cf6 \strokec6  \cf8 \strokec8 2.0\cf6 \strokec6 )\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Lookup table for sin(x) in [0, \uc0\u960 /2]\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 double\cf4 \strokec4  \cf9 \strokec9 *\cf10 \strokec10 sine_table\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf6 \strokec6 NULL\cf4 \strokec4 ;\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Populate the sine lookup table\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 void\cf4 \strokec4  \cf11 \strokec11 init_sine_table\cf4 \strokec4 () \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf10 \strokec10 sine_table\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  (\cf6 \strokec6 double\cf9 \strokec9 *\cf4 \strokec4 )\cf11 \strokec11 malloc\cf4 \strokec4 ((\cf6 \strokec6 N\cf9 \strokec9 +\cf8 \strokec8 1\cf4 \strokec4 )\cf9 \strokec9 *\cf6 \strokec6 sizeof\cf4 \strokec4 (\cf6 \strokec6 double\cf4 \strokec4 ));\cb1 \
+\cb3     \cf5 \strokec5 for\cf4 \strokec4  (\cf6 \strokec6 int\cf4 \strokec4  \cf10 \strokec10 i\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ; \cf10 \strokec10 i\cf4 \strokec4  \cf9 \strokec9 <=\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 ; \cf10 \strokec10 i\cf9 \strokec9 ++\cf4 \strokec4 ) \{\cb1 \
+\cb3         \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf6 \strokec6 PI2\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  ((\cf6 \strokec6 double\cf4 \strokec4 )\cf10 \strokec10 i\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 );\cb1 \
+\cb3         \cf10 \strokec10 sine_table\cf4 \strokec4 [\cf10 \strokec10 i\cf4 \strokec4 ] \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 sin\cf4 \strokec4 (\cf10 \strokec10 x\cf4 \strokec4 );\cb1 \
+\cb3     \}\cb1 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Fast sine lookup for x in [0, \uc0\u960 /2]\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 double\cf4 \strokec4  \cf11 \strokec11 fast_sin\cf4 \strokec4 (\cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 x\cf4 \strokec4 ) \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 <\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ) \cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 >\cf4 \strokec4  \cf6 \strokec6 PI2\cf4 \strokec4 ) \cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf6 \strokec6 PI2\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  \cf10 \strokec10 idx\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  (\cf6 \strokec6 int\cf4 \strokec4 )(\cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf6 \strokec6 PI2\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 );\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 idx\cf4 \strokec4  \cf9 \strokec9 <\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ) \cf10 \strokec10 idx\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 idx\cf4 \strokec4  \cf9 \strokec9 >\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 ) \cf10 \strokec10 idx\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 return\cf4 \strokec4  \cf10 \strokec10 sine_table\cf4 \strokec4 [\cf10 \strokec10 idx\cf4 \strokec4 ];\cb1 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Fast arcsin lookup: binary search for value in table (returns angle)\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 double\cf4 \strokec4  \cf11 \strokec11 fast_arcsin\cf4 \strokec4 (\cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 y\cf4 \strokec4 ) \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 y\cf4 \strokec4  \cf9 \strokec9 <=\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ) \cf5 \strokec5 return\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 y\cf4 \strokec4  \cf9 \strokec9 >=\cf4 \strokec4  \cf8 \strokec8 1\cf4 \strokec4 ) \cf5 \strokec5 return\cf4 \strokec4  \cf6 \strokec6 PI2\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  \cf10 \strokec10 left\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 , \cf10 \strokec10 right\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 , \cf10 \strokec10 mid\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 while\cf4 \strokec4  (\cf10 \strokec10 left\cf4 \strokec4  \cf9 \strokec9 <\cf4 \strokec4  \cf10 \strokec10 right\cf4 \strokec4 ) \{\cb1 \
+\cb3         \cf10 \strokec10 mid\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  (\cf10 \strokec10 left\cf4 \strokec4  \cf9 \strokec9 +\cf4 \strokec4  \cf10 \strokec10 right\cf4 \strokec4 ) \cf9 \strokec9 /\cf4 \strokec4  \cf8 \strokec8 2\cf4 \strokec4 ;\cb1 \
+\cb3         \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 sine_table\cf4 \strokec4 [\cf10 \strokec10 mid\cf4 \strokec4 ] \cf9 \strokec9 <\cf4 \strokec4  \cf10 \strokec10 y\cf4 \strokec4 )\cb1 \
+\cb3             \cf10 \strokec10 left\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 mid\cf4 \strokec4  \cf9 \strokec9 +\cf4 \strokec4  \cf8 \strokec8 1\cf4 \strokec4 ;\cb1 \
+\cb3         \cf5 \strokec5 else\cf4 \cb1 \strokec4 \
+\cb3             \cf10 \strokec10 right\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 mid\cf4 \strokec4 ;\cb1 \
+\cb3     \}\cb1 \
+\cb3     \cf5 \strokec5 return\cf4 \strokec4  \cf6 \strokec6 PI2\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  ((\cf6 \strokec6 double\cf4 \strokec4 )\cf10 \strokec10 left\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf6 \strokec6 N\cf4 \strokec4 );\cb1 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Tier 0 sine-only addition using lookup table\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 void\cf4 \strokec4  \cf11 \strokec11 sine_add\cf4 \strokec4 (\cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 A\cf4 \strokec4 , \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 B\cf4 \strokec4 , \cf6 \strokec6 double\cf4 \strokec4  \cf9 \strokec9 *\cf10 \strokec10 A_out\cf4 \strokec4 , \cf6 \strokec6 double\cf4 \strokec4  \cf9 \strokec9 *\cf10 \strokec10 B_out\cf4 \strokec4 , \cf6 \strokec6 double\cf4 \strokec4  \cf9 \strokec9 *\cf10 \strokec10 K_out\cf4 \strokec4 ) \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 K\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 A\cf4 \strokec4  \cf9 \strokec9 +\cf4 \strokec4  \cf10 \strokec10 B\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 K\cf4 \strokec4  \cf9 \strokec9 ==\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ) \{\cb1 \
+\cb3         \cf9 \strokec9 *\cf10 \strokec10 A_out\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3         \cf9 \strokec9 *\cf10 \strokec10 B_out\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3         \cf9 \strokec9 *\cf10 \strokec10 K_out\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3         \cf5 \strokec5 return\cf4 \strokec4 ;\cb1 \
+\cb3     \}\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 a\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 A\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf10 \strokec10 K\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_arcsin\cf4 \strokec4 (\cf11 \strokec11 sqrt\cf4 \strokec4 (\cf10 \strokec10 a\cf4 \strokec4 ));\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 sin_x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_sin\cf4 \strokec4 (\cf10 \strokec10 x\cf4 \strokec4 );\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 sin_x_p4\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_sin\cf4 \strokec4 (\cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 +\cf4 \strokec4  (\cf6 \strokec6 M_PI\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf8 \strokec8 4\cf4 \strokec4 ));\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 b\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 pow\cf4 \strokec4 (\cf11 \strokec11 sqrt\cf4 \strokec4 (\cf8 \strokec8 2\cf4 \strokec4 ) \cf9 \strokec9 *\cf4 \strokec4  \cf10 \strokec10 sin_x_p4\cf4 \strokec4  \cf9 \strokec9 -\cf4 \strokec4  \cf10 \strokec10 sin_x\cf4 \strokec4 , \cf8 \strokec8 2\cf4 \strokec4 );\cb1 \
+\cb3     \cf9 \strokec9 *\cf10 \strokec10 A_out\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 a\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  \cf10 \strokec10 K\cf4 \strokec4 ;\cb1 \
+\cb3     \cf9 \strokec9 *\cf10 \strokec10 B_out\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 b\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  \cf10 \strokec10 K\cf4 \strokec4 ;\cb1 \
+\cb3     \cf9 \strokec9 *\cf10 \strokec10 K_out\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 K\cf4 \strokec4 ;\cb1 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Optional: Sine-based multiplication (using lookup)\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 double\cf4 \strokec4  \cf11 \strokec11 sine_multiply\cf4 \strokec4 (\cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 A\cf4 \strokec4 , \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 B\cf4 \strokec4 , \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 max_value\cf4 \strokec4 ) \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 a\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 A\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf10 \strokec10 max_value\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 b\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 B\cf4 \strokec4  \cf9 \strokec9 /\cf4 \strokec4  \cf10 \strokec10 max_value\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_arcsin\cf4 \strokec4 (\cf11 \strokec11 sqrt\cf4 \strokec4 (\cf10 \strokec10 a\cf4 \strokec4 ));\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 y\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_arcsin\cf4 \strokec4 (\cf11 \strokec11 sqrt\cf4 \strokec4 (\cf10 \strokec10 b\cf4 \strokec4 ));\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 sin_x\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_sin\cf4 \strokec4 (\cf10 \strokec10 x\cf4 \strokec4 );\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 sin_y\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 fast_sin\cf4 \strokec4 (\cf10 \strokec10 y\cf4 \strokec4 );\cb1 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 prod\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf10 \strokec10 sin_x\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  \cf10 \strokec10 sin_y\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 return\cf4 \strokec4  (\cf10 \strokec10 prod\cf4 \strokec4  \cf9 \strokec9 *\cf4 \strokec4  \cf10 \strokec10 prod\cf4 \strokec4 ) \cf9 \strokec9 *\cf4 \strokec4  \cf10 \strokec10 max_value\cf4 \strokec4 ;\cb1 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \cb3 \strokec2 // Free the sine table at the end\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 void\cf4 \strokec4  \cf11 \strokec11 free_sine_table\cf4 \strokec4 () \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf5 \strokec5 if\cf4 \strokec4  (\cf10 \strokec10 sine_table\cf4 \strokec4 ) \cf11 \strokec11 free\cf4 \strokec4 (\cf10 \strokec10 sine_table\cf4 \strokec4 );\cb1 \
+\cb3 \}\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf6 \cb3 \strokec6 int\cf4 \strokec4  \cf11 \strokec11 main\cf4 \strokec4 () \{\cb1 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3     \cf11 \strokec11 init_sine_table\cf4 \strokec4 ();\cb1 \
+\
+\cb3     \cf2 \strokec2 // Test addition: 37 + 63\cf4 \cb1 \strokec4 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 A\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 37\cf4 \strokec4 , \cf10 \strokec10 B\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 63\cf4 \strokec4 , \cf10 \strokec10 Ares\cf4 \strokec4 , \cf10 \strokec10 Bres\cf4 \strokec4 , \cf10 \strokec10 Kres\cf4 \strokec4 ;\cb1 \
+\cb3     \cf11 \strokec11 sine_add\cf4 \strokec4 (\cf10 \strokec10 A\cf4 \strokec4 , \cf10 \strokec10 B\cf4 \strokec4 , \cf9 \strokec9 &\cf10 \strokec10 Ares\cf4 \strokec4 , \cf9 \strokec9 &\cf10 \strokec10 Bres\cf4 \strokec4 , \cf9 \strokec9 &\cf10 \strokec10 Kres\cf4 \strokec4 );\cb1 \
+\cb3     \cf11 \strokec11 printf\cf4 \strokec4 (\cf7 \strokec7 "Sine Table Addition: \cf10 \strokec10 %.2f\cf7 \strokec7  + \cf10 \strokec10 %.2f\cf7 \strokec7  = \cf10 \strokec10 %.2f\cf7 \strokec7  (A': \cf10 \strokec10 %.6f\cf7 \strokec7 , B': \cf10 \strokec10 %.6f\cf7 \strokec7 )\cf12 \strokec12 \\n\cf7 \strokec7 "\cf4 \strokec4 , \cf10 \strokec10 A\cf4 \strokec4 , \cf10 \strokec10 B\cf4 \strokec4 , \cf10 \strokec10 Kres\cf4 \strokec4 , \cf10 \strokec10 Ares\cf4 \strokec4 , \cf10 \strokec10 Bres\cf4 \strokec4 );\cb1 \
+\
+\cb3     \cf2 \strokec2 // Test normalized case: 0.5 + 0.5\cf4 \cb1 \strokec4 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 A2\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0.5\cf4 \strokec4 , \cf10 \strokec10 B2\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf8 \strokec8 0.5\cf4 \strokec4 , \cf10 \strokec10 Ares2\cf4 \strokec4 , \cf10 \strokec10 Bres2\cf4 \strokec4 , \cf10 \strokec10 Kres2\cf4 \strokec4 ;\cb1 \
+\cb3     \cf11 \strokec11 sine_add\cf4 \strokec4 (\cf10 \strokec10 A2\cf4 \strokec4 , \cf10 \strokec10 B2\cf4 \strokec4 , \cf9 \strokec9 &\cf10 \strokec10 Ares2\cf4 \strokec4 , \cf9 \strokec9 &\cf10 \strokec10 Bres2\cf4 \strokec4 , \cf9 \strokec9 &\cf10 \strokec10 Kres2\cf4 \strokec4 );\cb1 \
+\cb3     \cf11 \strokec11 printf\cf4 \strokec4 (\cf7 \strokec7 "K=1 Test: \cf10 \strokec10 %.2f\cf7 \strokec7  + \cf10 \strokec10 %.2f\cf7 \strokec7  = \cf10 \strokec10 %.2f\cf7 \strokec7  (A': \cf10 \strokec10 %.6f\cf7 \strokec7 , B': \cf10 \strokec10 %.6f\cf7 \strokec7 )\cf12 \strokec12 \\n\cf7 \strokec7 "\cf4 \strokec4 , \cf10 \strokec10 A2\cf4 \strokec4 , \cf10 \strokec10 B2\cf4 \strokec4 , \cf10 \strokec10 Kres2\cf4 \strokec4 , \cf10 \strokec10 Ares2\cf4 \strokec4 , \cf10 \strokec10 Bres2\cf4 \strokec4 );\cb1 \
+\
+\cb3     \cf2 \strokec2 // Optional: Sine-based multiplication test\cf4 \cb1 \strokec4 \
+\cb3     \cf6 \strokec6 double\cf4 \strokec4  \cf10 \strokec10 Mres\cf4 \strokec4  \cf9 \strokec9 =\cf4 \strokec4  \cf11 \strokec11 sine_multiply\cf4 \strokec4 (\cf10 \strokec10 A\cf4 \strokec4 , \cf10 \strokec10 B\cf4 \strokec4 , (\cf10 \strokec10 A\cf9 \strokec9 +\cf10 \strokec10 B\cf4 \strokec4 ));\cb1 \
+\cb3     \cf11 \strokec11 printf\cf4 \strokec4 (\cf7 \strokec7 "Sine Table Multiplication: \cf10 \strokec10 %.2f\cf7 \strokec7  * \cf10 \strokec10 %.2f\cf7 \strokec7  \uc0\u8776  \cf10 \strokec10 %.6f\cf12 \strokec12 \\n\cf7 \strokec7 "\cf4 \strokec4 , \cf10 \strokec10 A\cf4 \strokec4 , \cf10 \strokec10 B\cf4 \strokec4 , \cf10 \strokec10 Mres\cf4 \strokec4 );\cb1 \
+\
+\cb3     \cf11 \strokec11 free_sine_table\cf4 \strokec4 ();\cb1 \
+\cb3     \cf5 \strokec5 return\cf4 \strokec4  \cf8 \strokec8 0\cf4 \strokec4 ;\cb1 \
+\cb3 \}\cb1 \
+}
