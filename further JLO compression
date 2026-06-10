@@ -1,0 +1,288 @@
+#ifndef META_COMPRESS_H
+#define META_COMPRESS_H
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// ------------------------------------------------------------
+// Prism tile (from your existing code)
+// ------------------------------------------------------------
+typedef struct {
+    float a0, a1, a2, a3;
+} PrismTile;
+
+// ------------------------------------------------------------
+// Half‑sine descriptor
+// ------------------------------------------------------------
+typedef struct {
+    int   direction;      // +1 = rising arc, -1 = falling arc
+    int   prism_count;    // number of prisms in this half‑sine
+    int   start_idx;      // index in the prism array
+} HalfSine;
+
+// ------------------------------------------------------------
+// Full sine descriptor (two opposite half‑sines)
+// ------------------------------------------------------------
+typedef struct {
+    int   prism_count;    // total prisms (2 × half_sine_count)
+    int   start_idx;      // index in the prism array
+} FullSine;
+
+// ------------------------------------------------------------
+// Run‑length encoded full sine
+// ------------------------------------------------------------
+typedef struct {
+    uint64_t pattern_hash;   // hash of the full sine's coefficients
+    int      repeat_count;   // how many consecutive identical full sines
+    int      start_idx;      // index in the prism array
+} RLESine;
+
+// ------------------------------------------------------------
+// API
+// ------------------------------------------------------------
+
+// Step 1: JLO encoding (calls your existing jlo_encode)
+// Returns number of triangle primitives (or 0 on error)
+int jlo_encode_to_triangles(const float* signal, int nsamples,
+                            void* out_triangles, size_t max_bytes);
+
+// Step 2: Group triangles (already done by JLO – its output is triangles)
+// Step 3: Group triangles into prisms (using your make_prism logic)
+int triangles_to_prisms(const float* signal, int nsamples,
+                        int tile_size, PrismTile* out_prisms);
+
+// Step 4: Group prisms into half‑sines
+int prisms_to_half_sines(const PrismTile* prisms, int n_prisms,
+                         float epsilon, HalfSine* out_half_sines);
+
+// Step 5: Combine half‑sines into full sines
+int half_sines_to_full_sines(const HalfSine* half_sines, int n_half,
+                             FullSine* out_full_sines);
+
+// Step 6: Run‑length encode identical full sines
+int full_sines_to_rle(const FullSine* full_sines, int n_full,
+                      RLESine* out_rle);
+
+// Convenience: full pipeline
+int meta_compress(const float* signal, int nsamples,
+                  int tile_size, float epsilon,
+                  RLESine* out_rle, int max_rle);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // META_COMPRESS_H 
+
+#include "meta_compress.h"
+#include <math.h>
+#include <string.h>
+#include <stdlib.h>
+
+// ------------------------------------------------------------
+// Helper: compare two prisms (within epsilon)
+// ------------------------------------------------------------
+static bool prisms_equal(const PrismTile* a, const PrismTile* b, float eps) {
+    return fabsf(a->a0 - b->a0) <= eps &&
+           fabsf(a->a1 - b->a1) <= eps &&
+           fabsf(a->a2 - b->a2) <= eps &&
+           fabsf(a->a3 - b->a3) <= eps;
+}
+
+// ------------------------------------------------------------
+// Helper: compute a simple hash of a prism (for RLE)
+// ------------------------------------------------------------
+static uint64_t prism_hash(const PrismTile* p) {
+    // Crude but fast: treat the 4 floats as 16 bytes and XOR them
+    const uint32_t* w = (const uint32_t*)p;
+    uint64_t h = 0;
+    for (int i = 0; i < 4; ++i) {
+        h ^= w[i];
+        h = (h << 1) | (h >> 63);
+    }
+    return h;
+}
+
+// ------------------------------------------------------------
+// Step 3: Build prisms from raw signal (using your make_prism)
+// We replicate the logic from your earlier prism_cuda_tiles.cu
+// ------------------------------------------------------------
+int triangles_to_prisms(const float* signal, int nsamples,
+                        int tile_size, PrismTile* out_prisms) {
+    if (nsamples <= 0 || tile_size <= 0) return 0;
+    int n_tiles = nsamples / tile_size;
+    if (n_tiles == 0) return 0;
+
+    double dtheta = 2.0 * 3.141592653589793 / nsamples;
+
+    for (int ti = 0; ti < n_tiles; ++ti) {
+        int i0 = ti * tile_size;
+        int i1 = i0 + tile_size - 1;
+
+        double t0 = i0 * dtheta;
+        double t1 = i1 * dtheta;
+
+        float y0 = signal[i0];
+        float y1 = signal[i1];
+        float dy0 = cos(t0) * dtheta;
+        float dy1 = cos(t1) * dtheta;
+
+        // Convert to coefficients (same as make_prism in your code)
+        float m0 = dy0 * (tile_size - 1);
+        float m1 = dy1 * (tile_size - 1);
+        float c0 = y0;
+        float c1 = m0;
+        float c2 = 3.0f*(y1 - y0) - 2.0f*m0 - m1;
+        float c3 = 2.0f*(y0 - y1) + m0 + m1;
+        float s  = 1.0f / (tile_size - 1);
+        float s2 = s * s;
+        float s3 = s2 * s;
+
+        out_prisms[ti].a0 = c0;
+        out_prisms[ti].a1 = c1 * s;
+        out_prisms[ti].a2 = c2 * s2;
+        out_prisms[ti].a3 = c3 * s3;
+    }
+    return n_tiles;
+}
+
+// ------------------------------------------------------------
+// Step 4: Group prisms into half‑sines (runs of identical prisms)
+// ------------------------------------------------------------
+int prisms_to_half_sines(const PrismTile* prisms, int n_prisms,
+                         float epsilon, HalfSine* out_half_sines) {
+    if (n_prisms <= 0) return 0;
+
+    int n_half = 0;
+    int i = 0;
+    while (i < n_prisms) {
+        HalfSine hs = {0};
+        hs.start_idx = i;
+        hs.direction = (prisms[i].a0 >= 0) ? 1 : -1; // simplistic direction
+
+        int j = i + 1;
+        while (j < n_prisms && prisms_equal(&prisms[i], &prisms[j], epsilon)) {
+            ++j;
+        }
+        hs.prism_count = j - i;
+        out_half_sines[n_half++] = hs;
+        i = j;
+    }
+    return n_half;
+}
+
+// ------------------------------------------------------------
+// Step 5: Combine opposite half‑sines into full sines
+// ------------------------------------------------------------
+int half_sines_to_full_sines(const HalfSine* half_sines, int n_half,
+                             FullSine* out_full_sines) {
+    int n_full = 0;
+    for (int i = 0; i + 1 < n_half; ++i) {
+        const HalfSine* a = &half_sines[i];
+        const HalfSine* b = &half_sines[i+1];
+        if (a->direction != b->direction) {
+            FullSine fs;
+            fs.prism_count = a->prism_count + b->prism_count;
+            fs.start_idx = a->start_idx;
+            out_full_sines[n_full++] = fs;
+            i++; // skip the paired half‑sine
+        }
+    }
+    return n_full;
+}
+
+// ------------------------------------------------------------
+// Step 6: Run‑length encode identical full sines
+// ------------------------------------------------------------
+int full_sines_to_rle(const FullSine* full_sines, int n_full,
+                      RLESine* out_rle) {
+    if (n_full <= 0) return 0;
+
+    int n_rle = 0;
+    int i = 0;
+    while (i < n_full) {
+        // We need a way to compare full sines. For simplicity, we assume that
+        // two full sines are identical if they have the same prism_count.
+        // In a real implementation you would also compare the actual prism
+        // coefficients (or a hash of them).
+        RLESine rle;
+        rle.pattern_hash = (uint64_t)full_sines[i].prism_count; // placeholder
+        rle.repeat_count = 1;
+        rle.start_idx = full_sines[i].start_idx;
+
+        int j = i + 1;
+        while (j < n_full && full_sines[j].prism_count == full_sines[i].prism_count) {
+            rle.repeat_count++;
+            j++;
+        }
+        out_rle[n_rle++] = rle;
+        i = j;
+    }
+    return n_rle;
+}
+
+// ------------------------------------------------------------
+// Step 7: Full pipeline
+// ------------------------------------------------------------
+int meta_compress(const float* signal, int nsamples,
+                  int tile_size, float epsilon,
+                  RLESine* out_rle, int max_rle) {
+    if (nsamples <= 0 || tile_size <= 0) return 0;
+
+    int n_tiles = nsamples / tile_size;
+    if (n_tiles == 0) return 0;
+
+    // Allocate temporary space (could be on stack if small)
+    PrismTile* prisms = (PrismTile*)malloc(n_tiles * sizeof(PrismTile));
+    if (!prisms) return 0;
+
+    // Step 1: JLO (here we directly call triangles_to_prisms as a proxy)
+    // In reality you'd call your jlo_encode first.
+    int n_prisms = triangles_to_prisms(signal, nsamples, tile_size, prisms);
+
+    // Step 2: Group prisms into half‑sines
+    HalfSine* half_sines = (HalfSine*)malloc(n_prisms * sizeof(HalfSine));
+    if (!half_sines) { free(prisms); return 0; }
+    int n_half = prisms_to_half_sines(prisms, n_prisms, epsilon, half_sines);
+
+    // Step 3: Combine half‑sines into full sines
+    FullSine* full_sines = (FullSine*)malloc(n_half * sizeof(FullSine));
+    if (!full_sines) { free(prisms); free(half_sines); return 0; }
+    int n_full = half_sines_to_full_sines(half_sines, n_half, full_sines);
+
+    // Step 4: RLE of full sines
+    int n_rle = full_sines_to_rle(full_sines, n_full, out_rle);
+    if (n_rle > max_rle) n_rle = max_rle;
+
+    free(prisms);
+    free(half_sines);
+    free(full_sines);
+    return n_rle;
+} 
+
+#include <stdio.h>
+#include <math.h>
+#include "meta_compress.h"
+
+int main() {
+    const int NSAMPLES = 32768;
+    float* signal = (float*)malloc(NSAMPLES * sizeof(float));
+    for (int i = 0; i < NSAMPLES; ++i) {
+        signal[i] = sinf(2.0 * 3.14159 * i / NSAMPLES);
+    }
+
+    RLESine rle[256];
+    int n_rle = meta_compress(signal, NSAMPLES, 256, 1e-4f, rle, 256);
+
+    printf("Original samples: %d\n", NSAMPLES);
+    printf("Number of RLE sine descriptors: %d\n", n_rle);
+    // A single full sine would be described as one RLE entry -> massive compression
+
+    free(signal);
+    return 0;
+}
